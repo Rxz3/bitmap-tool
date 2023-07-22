@@ -72,7 +72,6 @@ onMounted(async () => {
   }, 1000)
 
   setInterval(async () => {
-    blockHeight.value = await getBlockHeight()
     nextData.value = await getBitmapInfo(nextBlockHeight.value)
   }, REFRESH_INTERVAL)
 })
