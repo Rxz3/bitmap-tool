@@ -17,6 +17,9 @@ dependencies:
   element-plus:
     specifier: ^2.3.7
     version: 2.3.7(vue@3.3.4)
+  follow-redirects:
+    specifier: ^1.15.2
+    version: 1.15.2
   vue:
     specifier: ^3.3.4
     version: 3.3.4
