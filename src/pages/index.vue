@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref ,watch} from 'vue'
-import Footer from '../components/Footer.vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useWebSocket } from '@vueuse/core'
 import { getBlockHeight, searchBRCText } from '../api'
-import { shortenAddress } from '../utils'
+import { base64ToUtf8, shortenAddress } from '../utils'
+import WebSocketClient from '../utils/websocket'
+import Footer from '../components/Footer.vue'
 
 const REFRESH_INTERVAL = 10000
 const vSize = 173.5
@@ -72,6 +74,7 @@ onMounted(async () => {
   }, 1000)
 
   setInterval(async () => {
+    currentData.value = await getBitmapInfo(blockHeight.value)
     nextData.value = await getBitmapInfo(nextBlockHeight.value)
   }, REFRESH_INTERVAL)
 })
@@ -79,6 +82,55 @@ onMounted(async () => {
 watch(blockHeight, async () => {
   currentData.value = await getBitmapInfo(blockHeight.value)
 })
+
+const client = new WebSocketClient('wss://wstest.ordipulse.com/ws/v1/brc20mint')
+client.connect()
+
+// const ws = new WebSocket('wss://wstest.ordipulse.com/ws/v1/brc20mint')
+
+// ws.onmessage = (event) => {
+//   const res = event.data === 'ok' ? null :JSON.parse(event.data)
+//   if(res?.msg_type === 'Mempool') {
+//     res.data.ordinals.forEach((item: any) => {
+//       const inscription = base64ToUtf8(item.inscription_data.body)
+//       console.log(inscription)
+//       if(inscription === `${nextBlockHeight}.bitmap`) {
+//         console.log(999, res.data)
+//       }
+//     })
+//   }
+// }
+
+// const { status, data, close } = useWebSocket(
+//   'wss://wstest.ordipulse.com/ws/v1/brc20mint',
+//   {
+//     autoReconnect: {
+//       retries: 3,
+//       delay: 1000,
+//       onFailed() {
+//         console.warn('Failed to connect WebSocket after 3 retries')
+//       },
+//     },
+//     heartbeat: {
+//       message: '{"type":"ping"}',
+//       interval: 30000,
+//       pongTimeout: 1000,
+//     },
+//   }
+// )
+
+// watch(data, () => {
+//   const res = data.value === 'ok' ? null : JSON.parse(data.value)
+//   if (res?.msg_type === 'Mempool') {
+//     res.data.ordinals.forEach((item: any) => {
+//       const inscription = base64ToUtf8(item.inscription_data.body)
+//       console.log(inscription)
+//       if (inscription === `${nextBlockHeight.value}.bitmap`) {
+//         console.log(999, res.data)
+//       }
+//     })
+//   }
+// })
 </script>
 
 <template>

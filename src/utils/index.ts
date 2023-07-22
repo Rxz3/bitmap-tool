@@ -1,3 +1,14 @@
+import utf8 from 'crypto-js/enc-utf8'
+import base64 from 'crypto-js/enc-base64'
+
+export function utf8ToBase64(data: string) {
+  return base64.stringify(utf8.parse(data))
+}
+
+export function base64ToUtf8(data: string) {
+  return utf8.stringify(base64.parse(data))
+}
+
 export function retry<T>(
   fn: (...args: any[]) => Promise<T>,
   times = 0,
