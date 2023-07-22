@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref ,watch} from 'vue'
 import Footer from '../components/Footer.vue'
 import { getBlockHeight, searchBRCText } from '../api'
 import { shortenAddress } from '../utils'
@@ -69,8 +69,16 @@ onMounted(async () => {
 
   setInterval(async () => {
     blockHeight.value = await getBlockHeight()
+  }, 1000)
+
+  setInterval(async () => {
+    blockHeight.value = await getBlockHeight()
     nextData.value = await getBitmapInfo(nextBlockHeight.value)
   }, REFRESH_INTERVAL)
+})
+
+watch(blockHeight, async () => {
+  currentData.value = await getBitmapInfo(blockHeight.value)
 })
 </script>
 
