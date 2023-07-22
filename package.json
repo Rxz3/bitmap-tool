@@ -1,0 +1,31 @@
+{
+  "name": "bitmap-tool",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.1.0",
+    "@vueuse/core": "^10.2.0",
+    "axios": "^1.4.0",
+    "element-plus": "^2.3.7",
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "@holazz/eslint-config": "^1.4.7",
+    "@iconify-json/carbon": "^1.1.18",
+    "@unocss/reset": "^0.53.4",
+    "@vitejs/plugin-vue": "^4.2.3",
+    "eslint": "^8.43.0",
+    "prettier": "^2.8.8",
+    "sass": "^1.63.6",
+    "typescript": "^5.1.5",
+    "unocss": "^0.53.4",
+    "unplugin-vue-components": "^0.25.1",
+    "vite": "^4.3.9",
+    "vite-plugin-pwa": "^0.16.4"
+  }
+}
