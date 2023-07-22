@@ -20,6 +20,9 @@ dependencies:
   follow-redirects:
     specifier: ^1.15.2
     version: 1.15.2
+  form-data:
+    specifier: ^4.0.0
+    version: 4.0.0
   vue:
     specifier: ^3.3.4
     version: 3.3.4
