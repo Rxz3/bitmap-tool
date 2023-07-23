@@ -49,7 +49,6 @@ const nextLiveData = useLocalStorage<LiveData[]>('nextLiveData', [])
 const blockInfo = reactive({
   avgFeeRate: 0,
   timestamp: 0,
-  mediantime: 0,
 })
 
 async function getBitmapInfo(block: number) {
@@ -102,7 +101,6 @@ onMounted(async () => {
     const _blockInfo = await getBlocInfo(blockHash)
     blockInfo.avgFeeRate = _blockInfo.extras.avgFeeRate
     blockInfo.timestamp = _blockInfo.timestamp
-    blockInfo.mediantime = _blockInfo.mediantime
   }, 1000)
 
   setInterval(async () => {
