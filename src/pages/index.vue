@@ -28,10 +28,11 @@ interface Data {
 }
 
 interface LiveData {
+  txid: string
   name: string
   fee: number
   feeRate: string
-  txid: string
+  address: string
   timestamp: number
 }
 
@@ -143,10 +144,11 @@ watch(ws, () => {
 
           if (!nextLiveData.value.find((d) => d.txid === inscription_id)) {
             nextLiveData.value.push({
+              txid: inscription_id,
               name: inscription,
               fee: txInfo.fee,
               feeRate: effectiveFeePerVsize.toFixed(2),
-              txid: inscription_id,
+              address: txInfo.vout[0].scriptpubkey_address,
               timestamp: t,
             })
           }
@@ -177,14 +179,14 @@ watch(blockHeight, () => {
           <el-table-column prop="name" label="铭文" />
           <el-table-column prop="fee" label="费用（sats）" />
           <el-table-column prop="feeRate" label="费率（sat/vB）" />
-          <el-table-column prop="txid" label="交易">
+          <el-table-column prop="address" label="地址">
             <template #default="scope">
               <el-link
                 type="primary"
                 :underline="false"
                 :href="`https://mempool.space/tx/${scope.row.txid}`"
                 target="_blank"
-                >{{ shortenAddress(scope.row.txid) }}</el-link
+                >{{ shortenAddress(scope.row.address) }}</el-link
               >
             </template>
           </el-table-column>
@@ -217,14 +219,14 @@ watch(blockHeight, () => {
           <el-table-column prop="name" label="铭文" />
           <el-table-column prop="fee" label="费用（sats）" />
           <el-table-column prop="feeRate" label="费率（sat/vB）" />
-          <el-table-column prop="txid" label="交易">
+          <el-table-column prop="address" label="地址">
             <template #default="scope">
               <el-link
                 type="primary"
                 :underline="false"
                 :href="`https://mempool.space/tx/${scope.row.txid}`"
                 target="_blank"
-                >{{ shortenAddress(scope.row.txid) }}</el-link
+                >{{ shortenAddress(scope.row.address) }}</el-link
               >
             </template>
           </el-table-column>
