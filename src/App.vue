@@ -3,7 +3,7 @@ import Index from './pages/index.vue'
 </script>
 
 <template>
-  <main px-4 py-10 font-sans text="center gray-700 dark:gray-200">
+  <main px-4 py-10 font-sans text="gray-700 dark:gray-200">
     <Index />
   </main>
 </template>

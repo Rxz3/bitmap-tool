@@ -6,7 +6,15 @@ export function utf8ToBase64(data: string) {
 }
 
 export function base64ToUtf8(data: string) {
-  return utf8.stringify(base64.parse(data))
+  try {
+    return utf8.stringify(base64.parse(data))
+  } catch (err) {
+    return ''
+  }
+}
+
+export function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export function retry<T>(
