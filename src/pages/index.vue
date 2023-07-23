@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -12,7 +12,7 @@ import {
   getTranscationInfo,
   searchBRCText,
 } from '../api'
-import { base64ToUtf8, shortenAddress } from '../utils'
+import { base64ToUtf8, retry, shortenAddress } from '../utils'
 import Footer from '../components/Footer.vue'
 import 'dayjs/locale/zh-cn'
 
@@ -47,13 +47,11 @@ const nextData = ref<Data[]>([])
 const currentLiveData = useLocalStorage<LiveData[]>('currentLiveData', [])
 const nextLiveData = useLocalStorage<LiveData[]>('nextLiveData', [])
 
-const blockInfo = reactive({
-  avgFeeRate: 0,
-  timestamp: 0,
-})
+const blockAvgFeeRate = ref(0)
+const blockTimestamp = ref(0)
 
 const blockTime = computed(() => {
-  return dayjs(blockInfo.timestamp * 1000).fromNow()
+  return dayjs(blockTimestamp.value * 1000).fromNow()
 })
 
 async function getBitmapInfo(block: number) {
@@ -104,8 +102,8 @@ onMounted(async () => {
     blockHeight.value = await getBlockHeight()
     const blockHash = await getBlockHash(blockHeight.value)
     const _blockInfo = await getBlocInfo(blockHash)
-    blockInfo.avgFeeRate = _blockInfo.extras.avgFeeRate
-    blockInfo.timestamp = _blockInfo.timestamp
+    blockAvgFeeRate.value = _blockInfo.extras.avgFeeRate
+    blockTimestamp.value = _blockInfo.timestamp
   }, 1000)
 
   setInterval(async () => {
@@ -137,10 +135,18 @@ watch(ws, () => {
           console.log(
             `${inscription} https://mempool.space/tx/${inscription_id}`
           )
-          const txInfo = await getTranscationInfo(inscription_id)
-          const effectiveFeePerVsize = await getEffectiveFeePerVsize(
-            inscription_id
-          )
+          // const txInfo = await getTranscationInfo(inscription_id)
+          // const effectiveFeePerVsize = await getEffectiveFeePerVsize(
+          //   inscription_id
+          // )
+
+          const [txInfo, effectiveFeePerVsize] = await Promise.all([
+            getTranscationInfo(inscription_id),
+            retry(
+              getEffectiveFeePerVsize,
+              Number.MAX_SAFE_INTEGER
+            )(inscription_id),
+          ])
 
           if (!nextLiveData.value.find((d) => d.txid === inscription_id)) {
             nextLiveData.value.push({
@@ -203,7 +209,7 @@ watch(blockHeight, () => {
             <el-tag size="large" type="success">{{ blockHeight }}</el-tag>
             <div class="flex items-center gap-4">
               <div class="text-[#67c23a]">
-                ~{{ blockInfo.avgFeeRate }}
+                ~{{ blockAvgFeeRate }}
                 <span class="text-sm">sat/vB</span>
               </div>
               <div class="text-sm">
@@ -272,7 +278,7 @@ watch(blockHeight, () => {
             <el-tag size="large" type="success">{{ blockHeight }}</el-tag>
             <div class="flex items-center gap-4">
               <div class="text-[#67c23a]">
-                ~{{ blockInfo.avgFeeRate }}
+                ~{{ blockAvgFeeRate }}
                 <span class="text-sm">sat/vB</span>
               </div>
               <div class="text-sm">
