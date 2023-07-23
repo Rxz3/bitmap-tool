@@ -51,6 +51,10 @@ const blockInfo = reactive({
   timestamp: 0,
 })
 
+const blockTime = computed(() => {
+  return dayjs(blockInfo.timestamp * 1000).fromNow()
+})
+
 async function getBitmapInfo(block: number) {
   const name = `${block}.bitmap`
   const { matchCount, detail } = await searchBRCText(name)
@@ -197,11 +201,11 @@ watch(blockHeight, () => {
             <el-tag size="large" type="success">{{ blockHeight }}</el-tag>
             <div class="flex items-center gap-4">
               <div class="text-[#67c23a]">
-                ~{{ blockInfo.avgFeeRate.toFixed(2) }}
+                ~{{ blockInfo.avgFeeRate }}
                 <span class="text-sm">sat/vB</span>
               </div>
               <div class="text-sm">
-                {{ dayjs(blockInfo.timestamp * 1000).fromNow() }}
+                {{ blockTime }}
               </div>
             </div>
           </div>
@@ -266,11 +270,11 @@ watch(blockHeight, () => {
             <el-tag size="large" type="success">{{ blockHeight }}</el-tag>
             <div class="flex items-center gap-4">
               <div class="text-[#67c23a]">
-                ~{{ blockInfo.avgFeeRate.toFixed(2) }}
+                ~{{ blockInfo.avgFeeRate }}
                 <span class="text-sm">sat/vB</span>
               </div>
               <div class="text-sm">
-                {{ dayjs(blockInfo.timestamp * 1000).fromNow() }}
+                {{ blockTime }}
               </div>
             </div>
           </div>
