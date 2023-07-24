@@ -172,7 +172,7 @@ watch(ws, () => {
 })
 
 watch(blockHeight, async (newVal, oldVal) => {
-  if (newVal === oldVal + 1) {
+  if (newVal < oldVal + 4) {
     currentLiveData.value = nextLiveData.value
     nextLiveData.value = []
   }
