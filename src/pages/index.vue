@@ -84,7 +84,7 @@ async function setBlockInfo() {
 }
 
 function setTableRowClassName(row: any, data: any) {
-  if (row.fee === Math.max(data.map((d: any) => d.fee))) {
+  if (row.feeRate === Math.max(data.map((d: any) => d.feeRate))) {
     return 'max'
   }
   return ''
@@ -117,10 +117,6 @@ onMounted(async () => {
     currentData.value = await getBitmapInfo(blockHeight.value)
     nextData.value = await getBitmapInfo(nextBlockHeight.value)
   }, REFRESH_INTERVAL)
-})
-
-watch(blockHeight, async () => {
-  await setBlockInfo()
 })
 
 const ws = useWebSocket({
@@ -175,11 +171,12 @@ watch(ws, () => {
   }
 })
 
-watch(blockHeight, (_, oldVal) => {
-  if (oldVal !== 0) {
+watch(blockHeight, async (newVal, oldVal) => {
+  if (newVal === oldVal + 1) {
     currentLiveData.value = nextLiveData.value
     nextLiveData.value = []
   }
+  await setBlockInfo()
 })
 </script>
 
