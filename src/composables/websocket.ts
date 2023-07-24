@@ -36,8 +36,7 @@ export function useWebSocket({
     }
 
     ws.value.onclose = (event) => {
-      // eslint-disable-next-line no-console
-      console.log(
+      console.warn(
         `WebSocket connection closed: ${event.code} - ${event.reason}`
       )
       if (pingIntervalId) {

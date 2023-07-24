@@ -33,7 +33,6 @@ interface LiveData {
   fee: number
   feeRate: string
   address: string
-  timestamp: number
 }
 
 const REFRESH_INTERVAL = 10000
@@ -51,7 +50,7 @@ const blockAvgFeeRate = ref(0)
 const blockTimestamp = ref(0)
 
 const blockTime = computed(() => {
-  return dayjs(blockTimestamp.value * 1000).fromNow()
+  return dayjs(blockTimestamp.value).fromNow()
 })
 
 async function getBitmapInfo(block: number) {
@@ -63,15 +62,25 @@ async function getBitmapInfo(block: number) {
   return await Promise.all(
     detail.map(async (d: any) => {
       const { inscriptionId, inSatoshi, outSatoshi, address, timestamp } = d
+
       return {
         name,
         fee: inSatoshi - outSatoshi,
         feeRate: ((inSatoshi - outSatoshi) / 173.5).toFixed(2),
         address,
-        timestamp,
+        timestamp: timestamp * 1000,
       }
     })
   )
+}
+
+async function setBlockInfo() {
+  currentData.value = await getBitmapInfo(blockHeight.value)
+  nextData.value = await getBitmapInfo(nextBlockHeight.value)
+  const blockHash = await getBlockHash(blockHeight.value)
+  const _blockInfo = await getBlocInfo(blockHash)
+  blockAvgFeeRate.value = _blockInfo.extras.avgFeeRate
+  blockTimestamp.value = _blockInfo.timestamp * 1000
 }
 
 function setTableRowClassName(row: any, data: any) {
@@ -95,15 +104,13 @@ const nextLiveTableRowClassName = ({ row }: any) =>
 
 onMounted(async () => {
   blockHeight.value = await getBlockHeight()
-  currentData.value = await getBitmapInfo(blockHeight.value)
-  nextData.value = await getBitmapInfo(nextBlockHeight.value)
+  await setBlockInfo()
 
-  setInterval(async () => {
-    blockHeight.value = await getBlockHeight()
-    const blockHash = await getBlockHash(blockHeight.value)
-    const _blockInfo = await getBlocInfo(blockHash)
-    blockAvgFeeRate.value = _blockInfo.extras.avgFeeRate
-    blockTimestamp.value = _blockInfo.timestamp
+  setInterval(() => {
+    blockTimestamp.value -= 1000
+    getBlockHeight().then((height) => {
+      blockHeight.value = height
+    })
   }, 1000)
 
   setInterval(async () => {
@@ -113,7 +120,7 @@ onMounted(async () => {
 })
 
 watch(blockHeight, async () => {
-  currentData.value = await getBitmapInfo(blockHeight.value)
+  await setBlockInfo()
 })
 
 const ws = useWebSocket({
@@ -130,22 +137,27 @@ watch(ws, () => {
       for (let i = 0; i < ordinals.length; i++) {
         const { inscription_id, inscription_data } = ordinals[i]
         const inscription = base64ToUtf8(inscription_data.body)
-        if (inscription === `${nextBlockHeight.value}.bitmap`) {
+        if (/^\d+\.bitmap/.test(inscription)) {
+          const logColor =
+            inscription === `${blockHeight.value}.bitmap`
+              ? '#67c23a'
+              : inscription === `${nextBlockHeight.value}.bitmap`
+              ? '#e6a23c'
+              : '#333'
           // eslint-disable-next-line no-console
           console.log(
-            `${inscription} https://mempool.space/tx/${inscription_id}`
+            `%c${inscription} https://mempool.space/tx/${inscription_id}`,
+            `color: ${logColor}`
           )
-          // const txInfo = await getTranscationInfo(inscription_id)
-          // const effectiveFeePerVsize = await getEffectiveFeePerVsize(
-          //   inscription_id
-          // )
-
+        }
+        if (inscription === `${nextBlockHeight.value}.bitmap`) {
           const [txInfo, effectiveFeePerVsize] = await Promise.all([
-            getTranscationInfo(inscription_id),
             retry(
-              getEffectiveFeePerVsize,
-              Number.MAX_SAFE_INTEGER
+              getTranscationInfo,
+              Number.MAX_SAFE_INTEGER,
+              1000
             )(inscription_id),
+            getEffectiveFeePerVsize(inscription_id),
           ])
 
           if (!nextLiveData.value.find((d) => d.txid === inscription_id)) {
@@ -155,7 +167,6 @@ watch(ws, () => {
               fee: txInfo.fee,
               feeRate: effectiveFeePerVsize.toFixed(2),
               address: txInfo.vout[0].scriptpubkey_address,
-              timestamp: t,
             })
           }
         }
@@ -164,9 +175,11 @@ watch(ws, () => {
   }
 })
 
-watch(blockHeight, () => {
-  currentLiveData.value = nextLiveData.value
-  nextLiveData.value = []
+watch(blockHeight, (_, oldVal) => {
+  if (oldVal !== 0) {
+    currentLiveData.value = nextLiveData.value
+    nextLiveData.value = []
+  }
 })
 </script>
 
@@ -183,8 +196,8 @@ watch(blockHeight, () => {
           :row-class-name="nextLiveTableRowClassName"
         >
           <el-table-column prop="name" label="铭文" />
-          <el-table-column prop="fee" label="费用（sats）" />
-          <el-table-column prop="feeRate" label="费率（sat/vB）" />
+          <el-table-column prop="fee" label="费用 (sats)" />
+          <el-table-column prop="feeRate" label="费率 (sat/vB)" />
           <el-table-column prop="address" label="地址">
             <template #default="scope">
               <el-link
@@ -194,11 +207,6 @@ watch(blockHeight, () => {
                 target="_blank"
                 >{{ shortenAddress(scope.row.address) }}</el-link
               >
-            </template>
-          </el-table-column>
-          <el-table-column prop="timestamp" label="时间">
-            <template #default="scope">
-              {{ dayjs(scope.row.timestamp).fromNow() }}
             </template>
           </el-table-column>
         </el-table>
@@ -223,8 +231,8 @@ watch(blockHeight, () => {
           :row-class-name="currentLiveTableRowClassName"
         >
           <el-table-column prop="name" label="铭文" />
-          <el-table-column prop="fee" label="费用（sats）" />
-          <el-table-column prop="feeRate" label="费率（sat/vB）" />
+          <el-table-column prop="fee" label="费用 (sats)" />
+          <el-table-column prop="feeRate" label="费率 (sat/vB)" />
           <el-table-column prop="address" label="地址">
             <template #default="scope">
               <el-link
@@ -234,11 +242,6 @@ watch(blockHeight, () => {
                 target="_blank"
                 >{{ shortenAddress(scope.row.address) }}</el-link
               >
-            </template>
-          </el-table-column>
-          <el-table-column prop="timestamp" label="时间">
-            <template #default="scope">
-              {{ dayjs(scope.row.timestamp).fromNow() }}
             </template>
           </el-table-column>
         </el-table>
@@ -252,8 +255,8 @@ watch(blockHeight, () => {
         </template>
         <el-table :data="nextData" :row-class-name="nextTableRowClassName">
           <el-table-column prop="name" label="铭文" />
-          <el-table-column prop="fee" label="费用（sats）" />
-          <el-table-column prop="feeRate" label="费率（sat/vB）" />
+          <el-table-column prop="fee" label="费用 (sats)" />
+          <el-table-column prop="feeRate" label="费率 (sat/vB)" />
           <el-table-column prop="address" label="地址">
             <template #default="scope">
               <el-link
@@ -267,7 +270,11 @@ watch(blockHeight, () => {
           </el-table-column>
           <el-table-column prop="timestamp" label="时间">
             <template #default="scope">
-              {{ dayjs(new Date().getTime() - scope.row.timestamp).fromNow() }}
+              {{
+                scope.row.timestamp === 0
+                  ? '刚刚'
+                  : dayjs(scope.row.timestamp).fromNow()
+              }}
             </template>
           </el-table-column>
         </el-table>
@@ -292,8 +299,8 @@ watch(blockHeight, () => {
           :row-class-name="currentTableRowClassName"
         >
           <el-table-column prop="name" label="铭文" />
-          <el-table-column prop="fee" label="费用（sats）" />
-          <el-table-column prop="feeRate" label="费率（sat/vB）" />
+          <el-table-column prop="fee" label="费用 (sats)" />
+          <el-table-column prop="feeRate" label="费率 (sat/vB)" />
           <el-table-column prop="address" label="地址">
             <template #default="scope">
               <el-link
@@ -307,7 +314,11 @@ watch(blockHeight, () => {
           </el-table-column>
           <el-table-column prop="timestamp" label="时间">
             <template #default="scope">
-              {{ dayjs(new Date().getTime() - scope.row.timestamp).fromNow() }}
+              {{
+                scope.row.timestamp === 0
+                  ? '刚刚'
+                  : dayjs(scope.row.timestamp).fromNow()
+              }}
             </template>
           </el-table-column>
         </el-table>
